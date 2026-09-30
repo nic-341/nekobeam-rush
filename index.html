@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ネコビーム RUSH</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<main>
+ <header><a class="brand" href="./index.html">NEKO BEAM <b>RUSH</b><span>ネコビーム ラッシュ</span></a><div class="stage-label">01 <span>はじまりの丘<br><small>THE FIRST HILLS</small></span></div><button id="sound" aria-label="効果音の切り替え">♪ SOUND OFF</button></header>
+ <section class="game" aria-label="ネコビーム RUSH ゲーム画面">
+  <canvas id="game" width="1280" height="720" aria-label="左右キーまたはA・Dで移動。攻撃は自動です。"></canvas>
+  <div class="top-hud"><div class="wave"><small>STAGE 01</small><strong id="wave">READY?</strong></div><div class="progress"><div id="progress"></div></div><div class="score"><small>ネズミ撃退</small><strong id="score">000</strong></div><button id="pause" title="一時停止 (P)">Ⅱ</button></div>
+  <div id="bossHud" class="boss-hud hidden" aria-label="ボスの残りHP"><div><i id="bossBar"></i></div></div>
+  <div id="notice" aria-live="polite"></div>
+  <div class="stats"><div><small>ネコ軍団</small><strong><span id="cats">1</span><em>匹</em></strong></div><div><small>ビーム</small><strong>Lv.<span id="beam">1</span></strong></div><div><small>攻撃力</small><strong id="power">1</strong></div><div><small>連射</small><strong>Lv.<span id="rate">1</span></strong></div><div><small>ビーム本数</small><strong><span id="ways">1</span><em>WAY</em></strong></div></div>
+  <div id="overlay" class="overlay"><div class="panel"><div class="eyebrow">ちいさなネコの、おおきな反撃。</div><h1>ネコビーム<span>RUSH</span></h1><p>仲間を増やして、ビーム全開！<br>左右のゲートを選んで、最強のネコ軍団へ。</p><button id="start" class="primary">出撃する <span>→</span></button><div class="instructions">← → / A D で移動 · 攻撃はオート<br>画面ドラッグでも操作できます</div></div></div>
+ </section>
+ <footer><span><kbd>←</kbd><kbd>→</kbd> 移動 <i></i> <kbd>P</kbd> 一時停止</span><span>選ぶ。増える。撃ちまくる。 <b>MEOW!</b></span></footer>
+</main><script src="game.js"></script>
+</body></html>
+
