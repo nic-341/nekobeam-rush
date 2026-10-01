@@ -2,7 +2,7 @@
 
 /* Touch devices use the landscape canvas proportions, without stretching. */
 .game{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.rotate-hint{display:none;text-align:center;padding:18px;color:#496859;font-size:14px}
+.rotate-hint{display:none;text-align:center;padding:18px;color:#496859;font-size:14px;pointer-events:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 @media(pointer:coarse){
  body{overscroll-behavior:none}main{padding:0}header,footer{display:none}
  .game{aspect-ratio:16/9;border:0;border-radius:0;box-shadow:none}
@@ -39,5 +39,6 @@
  h1{font-size:34px;margin:15px 0}h1 span{font-size:52px}
  .panel p,.eyebrow{display:block}.instructions{font-size:11px;margin-top:18px}
  .primary{min-height:50px}.results{gap:10px}.results>div{padding:12px}.results strong{font-size:22px}
- .rotate-hint{position:fixed;bottom:12%;left:0;width:100%;padding:0;pointer-events:none;font-size:11px;color:#63784c}
+ .rotate-hint{position:absolute;bottom:12%;left:0;width:100%;padding:0;pointer-events:none;font-size:11px;color:#63784c}
 }
+
