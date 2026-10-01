@@ -41,10 +41,10 @@ const enemyTypes={
 };
 const encounters=[
  {normal:55,armor:0,elite:0,captains:0,interval:.08,group:1,title:'はじまりの丘'},
- {normal:38,armor:8,elite:0,captains:0,interval:.22,group:2,title:'青よろい出現！ 硬い敵に集中攻撃'},
- {normal:40,armor:8,elite:0,captains:1,interval:.23,group:2,title:'中ボス · ネズミ隊長が接近！'},
- {normal:44,armor:6,elite:8,captains:2,interval:.22,group:3,title:'中ボス2体！ 赤よろいにも注意'},
- {normal:50,armor:8,elite:12,captains:2,interval:.24,group:3,title:'最終決戦 · 混成軍団と巨大ロボ！'}
+ {normal:46,armor:8,elite:0,captains:0,interval:.22,group:2,title:'青よろい出現！ 硬い敵に集中攻撃'},
+ {normal:50,armor:8,elite:0,captains:1,interval:.23,group:2,title:'中ボス · ネズミ隊長が接近！'},
+ {normal:56,armor:6,elite:8,captains:2,interval:.22,group:3,title:'中ボス2体！ 赤よろいにも注意'},
+ {normal:64,armor:8,elite:12,captains:2,interval:.24,group:3,title:'最終決戦 · 混成軍団と巨大ロボ！'}
 ];
 function makeLineup(config){
  const basic=Array(config.normal).fill('normal');
@@ -169,7 +169,7 @@ function shoot(){const s=state;const targets=s.enemies.filter(e=>e.hp>0).sort((a
  tone(850,.045);
 }
 function catPosition(i,count){const cols=Math.min(7,Math.ceil(Math.sqrt(count*1.7))),row=Math.floor(i/cols),inRow=Math.min(cols,count-row*cols);return {x:W/2+state.x*390*(W/1280)+(i%cols-(inRow-1)/2)*30,y:worldY(550)+row*24};}
-function nextGate(){state.phase='gate';state.phaseTime=0;state.gate={z:.85,options:gatePairs[state.wave],spawned:0,clock:.3};announce('',0);}
+function nextGate(){state.phase='gate';state.phaseTime=0;state.gate={z:.85,options:gatePairs[state.wave],spawned:0,clock:.15};announce('',0);}
 function selectGate(){const s=state,id=s.gate.options[s.x<=0?0:1],up=upgrades[id];up.apply(s);s.cats=Math.min(60,s.cats);s.maxCats=Math.max(s.maxCats,s.cats);s.history.push(up.label);const advance=s.gate.spawned||0;s.gate=null;s.wave++;s.phase='wave';s.phaseTime=0;s.spawned=advance;s.spawnClock=0;announce(up.label+'！',2);tone(1000,.2);if(s.wave===4){s.boss={x:0,z:.85,hp:Math.max(1800,900+s.cats*70),maxHp:Math.max(1800,900+s.cats*70),hit:0,attack:0,recovery:0,aimX:null,strike:0};}}
 function updateBoss(dt){
  const b=state.boss;if(b.hp<=0)return;
@@ -216,9 +216,9 @@ function update(dt){const s=state;if(s.mode!=='playing'||s.paused)return;s.time+
  else if(s.spawned===waves[s.wave]&&s.enemies.length===0)nextGate();
  }else if(s.phase==='gate'){
   const gate=s.gate;gate.z-=dt*.32;gate.clock-=dt;
-  if(gate.clock<=0&&gate.spawned<6){
-   spawn(s.wave+1,gate.spawned++);gate.clock=.24;
-   s.enemies[s.enemies.length-1].z=.88;
+  if(gate.clock<=0&&gate.spawned<12){
+   spawn(s.wave+1,gate.spawned++);gate.clock=.14;
+   s.enemies[s.enemies.length-1].z=.72;
   }
   for(const e of s.enemies){e.z-=e.speed*dt;e.hit=Math.max(0,e.hit-dt);}
   s.shotClock-=dt;
@@ -308,6 +308,7 @@ function render(){ctx.clearRect(0,0,W,H);ctx.save();if(state.shake>0)ctx.transla
  for(const b of state.beams){ctx.globalAlpha=b.life/b.max;line(b.x,b.y,b.tx,b.ty,b.color,b.width*3);line(b.x,b.y,b.tx,b.ty,'#fff',b.width);ellipse(b.tx,b.ty,7,7,'#fff');}ctx.globalAlpha=1;const count=Math.min(30,state.cats);for(let i=0;i<count;i++){const p=catPosition(i,count);cat(p.x,p.y+Math.sin(state.time*7+i)*1.4,.85);}if(state.cats>0){const p=catPosition(0,count);text('× '+state.cats,W/2+state.x*390*(W/1280),worldY(510),portrait?26:19,'#386b52');}ctx.restore();}
 function frame(now){resizeScene();const dt=Math.min(.04,(now-last)/1000||0);last=now;update(dt);render();requestAnimationFrame(frame);}sync();requestAnimationFrame(frame);
 })();
+
 
 
 
