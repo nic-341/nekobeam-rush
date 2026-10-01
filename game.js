@@ -87,21 +87,43 @@ state=fresh();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ways=()=>Math.max(state.extraWays,state.beam>=3?3:state.beam>=2?2:1);
 const damage=()=>state.power+2*(state.beam-1);
-function start(){state=fresh();state.mode='playing';ui.pause.textContent='Ⅱ';ui.overlay.classList.add('hidden');keys.clear();drag=null;announce('WAVE 1 · はじまりの丘',2);sync();}
+function start(){endDrag();state=fresh();state.mode='playing';ui.pause.textContent='Ⅱ';ui.overlay.classList.add('hidden');keys.clear();endDrag();announce('WAVE 1 · はじまりの丘',2);sync();}
 ui.start.addEventListener('click',start);
 function announce(t,seconds=2){ui.notice.textContent=t;state.notice=seconds;}
 function tone(freq=520,duration=.06){if(!sound)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq/2,audio.currentTime+duration);g.gain.setValueAtTime(.025,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}catch{sound=false;ui.sound.textContent='♪ SOUND OFF';}}
 ui.sound.onclick=()=>{sound=!sound;ui.sound.textContent=sound?'♪ SOUND ON':'♪ SOUND OFF';tone();};
-function pause(){if(state.mode!=='playing')return;state.paused=!state.paused;keys.clear();drag=null;ui.pause.textContent=state.paused?'▶':'Ⅱ';ui.notice.textContent=state.paused?'PAUSED · Pキー / ▶ で再開':'';}
+function pause(){if(state.mode!=='playing')return;state.paused=!state.paused;keys.clear();endDrag();ui.pause.textContent=state.paused?'▶':'Ⅱ';ui.notice.textContent=state.paused?'PAUSED · Pキー / ▶ で再開':'';}
 ui.pause.onclick=pause;
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','a','A','d','D','p','P',' '].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(e.key.toLowerCase()==='p'&&!e.repeat)pause();});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur',()=>{keys.clear();if(state.mode==='playing'&&!state.paused)pause();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.mode==='playing'&&!state.paused)pause();});
-canvas.addEventListener('pointerdown',e=>{if(state.mode!=='playing'||state.paused)return;drag=e.pointerId;canvas.setPointerCapture(e.pointerId);movePointer(e);});
-canvas.addEventListener('pointermove',e=>{if(drag===e.pointerId)movePointer(e);});
-for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>drag=null);
-function movePointer(e){const r=canvas.getBoundingClientRect();state.x=clamp(((e.clientX-r.left)/r.width-.5)*2.3,-.85,.85);}
+function endDrag(e){
+ if(!drag||(e&&e.pointerId!==undefined&&e.pointerId!==drag.id))return;
+ const id=drag.id;drag=null;
+ if(canvas.hasPointerCapture?.(id))canvas.releasePointerCapture(id);
+}
+canvas.addEventListener('pointerdown',e=>{
+ if(state.mode!=='playing'||state.paused||drag||e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0))return;
+ e.preventDefault();
+ drag={id:e.pointerId,lastX:e.clientX};
+ canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove',e=>{
+ if(!drag||drag.id!==e.pointerId)return;
+ if(e.buttons===0||state.mode!=='playing'||state.paused){endDrag(e);return;}
+ e.preventDefault();movePointer(e);
+});
+for(const event of ['pointerup','pointercancel'])window.addEventListener(event,endDrag,true);
+canvas.addEventListener('lostpointercapture',endDrag);
+canvas.addEventListener('dragstart',e=>e.preventDefault());
+window.addEventListener('blur',()=>endDrag());
+window.addEventListener('resize',()=>endDrag());
+function movePointer(e){
+ const r=canvas.getBoundingClientRect();
+ state.x=clamp(state.x+(e.clientX-drag.lastX)/r.width*2.6,-.85,.85);
+ drag.lastX=e.clientX;
+}
 function project(x,z){const p=1-clamp(z,0,1);const t=p*p;return {x:640+x*(92+361*t),y:165+455*t,s:.24+1.0*t};}
 function spawn(){
  const s=state,n=s.spawned++,type=lineups[s.wave][n],def=enemyTypes[type];
@@ -122,7 +144,7 @@ function catPosition(i,count){const cols=Math.min(7,Math.ceil(Math.sqrt(count*1.
 function nextGate(){state.phase='gate';state.phaseTime=0;state.gate={z:1,options:gatePairs[state.wave]};announce('',0);}
 function selectGate(){const s=state,id=s.gate.options[s.x<=0?0:1],up=upgrades[id];up.apply(s);s.cats=Math.min(60,s.cats);s.maxCats=Math.max(s.maxCats,s.cats);s.history.push(up.label);s.gate=null;s.wave++;s.phase='wave';s.phaseTime=0;s.spawned=0;s.spawnClock=0;announce(up.label+'！',2);tone(1000,.2);if(s.wave===4){s.boss={x:0,z:.85,hp:Math.max(520,320+s.cats*40),maxHp:Math.max(520,320+s.cats*40),hit:0,attack:0};}}
 function hurt(amount=1){state.hits+=amount;state.shake=.18;while(state.hits>=3&&state.cats>0){state.hits-=3;state.cats--;}if(state.cats===0)finish(false);else announce('突破された！ 残り耐久 '+(state.cats*3-state.hits),1.1);}
-function finish(clear){if(state.mode!=='playing')return;state.mode=clear?'clear':'over';state.paused=false;ui.pause.textContent='Ⅱ';keys.clear();ui.overlay.classList.remove('hidden');const elapsed=state.time.toFixed(1);ui.overlay.innerHTML='<div class="panel"><div class="eyebrow">'+(clear?'はじまりの丘、奪還成功！':'ネコたちの反撃は、ここから。')+'</div><h2>'+(clear?'STAGE CLEAR':'GAME OVER')+'</h2><div class="results"><div>倒したネズミ<strong>'+state.kills+' 匹</strong></div><div>最大ネコ人数<strong>'+state.maxCats+' 匹</strong></div><div>'+(clear?'クリアタイム':'プレイ時間')+'<strong>'+elapsed+' 秒</strong></div><div>取得した強化<strong>'+state.history.length+' 個</strong></div></div><p class="upgrades">'+(state.history.join(' / ')||'ゲートに到達して仲間を増やそう！')+'</p><button id="retry" class="primary">RETRY ↻</button></div>';document.getElementById('retry').onclick=start;}
+function finish(clear){if(state.mode!=='playing')return;endDrag();state.mode=clear?'clear':'over';state.paused=false;ui.pause.textContent='Ⅱ';keys.clear();ui.overlay.classList.remove('hidden');const elapsed=state.time.toFixed(1);ui.overlay.innerHTML='<div class="panel"><div class="eyebrow">'+(clear?'はじまりの丘、奪還成功！':'ネコたちの反撃は、ここから。')+'</div><h2>'+(clear?'STAGE CLEAR':'GAME OVER')+'</h2><div class="results"><div>倒したネズミ<strong>'+state.kills+' 匹</strong></div><div>最大ネコ人数<strong>'+state.maxCats+' 匹</strong></div><div>'+(clear?'クリアタイム':'プレイ時間')+'<strong>'+elapsed+' 秒</strong></div><div>取得した強化<strong>'+state.history.length+' 個</strong></div></div><p class="upgrades">'+(state.history.join(' / ')||'ゲートに到達して仲間を増やそう！')+'</p><button id="retry" class="primary">RETRY ↻</button></div>';document.getElementById('retry').onclick=start;}
 function update(dt){const s=state;if(s.mode!=='playing'||s.paused)return;s.time+=dt;s.scroll+=dt;s.phaseTime+=dt;s.shake=Math.max(0,s.shake-dt);s.notice-=dt;if(s.notice<=0)ui.notice.textContent='';const direction=(keys.has('arrowright')||keys.has('d')?1:0)-(keys.has('arrowleft')||keys.has('a')?1:0);s.x=clamp(s.x+direction*dt*1.4,-.85,.85);
  if(s.phase==='wave'){
  s.spawnClock-=dt;
@@ -221,6 +243,7 @@ function render(){ctx.clearRect(0,0,W,H);ctx.save();if(state.shake>0)ctx.transla
  for(const b of state.beams){ctx.globalAlpha=b.life/b.max;line(b.x,b.y,b.tx,b.ty,b.color,b.width*3);line(b.x,b.y,b.tx,b.ty,'#fff',b.width);ellipse(b.tx,b.ty,7,7,'#fff');}ctx.globalAlpha=1;const count=Math.min(30,state.cats);for(let i=0;i<count;i++){const p=catPosition(i,count);cat(p.x,p.y+Math.sin(state.time*7+i)*1.4,.85);}if(state.cats>0){const p=catPosition(0,count);text('× '+state.cats,640+state.x*390,510,19,'#386b52');}ctx.restore();}
 function frame(now){const dt=Math.min(.04,(now-last)/1000||0);last=now;update(dt);render();requestAnimationFrame(frame);}sync();requestAnimationFrame(frame);
 })();
+
 
 
 
