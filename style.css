@@ -42,3 +42,5 @@
  .rotate-hint{position:absolute;bottom:12%;left:0;width:100%;padding:0;pointer-events:none;font-size:11px;color:#63784c}
 }
 
+
+.stage-link{display:block;margin:12px auto;padding:10px 16px;border:2px solid #6b9b87;border-radius:14px;background:#edf8ef;color:#315c4e;font-weight:800;cursor:pointer}.panel .primary + .primary{margin-top:10px}
